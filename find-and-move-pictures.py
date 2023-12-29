@@ -4,6 +4,7 @@
 import os
 import shutil
 import face_recognition
+import time
 
 source_folder = "D:/Pictures"
 destination_folder = "D:/temp/son1"
@@ -27,7 +28,7 @@ def check_if_son_present(image_path):
     # Get face encodings for all faces in the image
     face_encodings = face_recognition.face_encodings(image, face_locations)
 
-    # Check if any face matches the son's face
+    # Check if any face matches the provided image path
     for face_encoding in face_encodings:
         match = face_recognition.compare_faces([son_encoding], face_encoding)
         if any(match):
@@ -40,14 +41,17 @@ for root, dirs, files in os.walk(source_folder):
         file_path = os.path.join(root, file)
         print("Kicking in that facial recognition, finding a match, and moving it to your destination . . .")
         matches = 0
+        start_time = time.time()
 
         # Check if the file is an image (you may need to customize this check)
         if file_path.lower().endswith(('.png', '.jpg', '.jpeg')):
-            # Check if the image contains your son's face
+            # Check if the image contains face from provided image path
             son_present = check_if_son_present(file_path)
             if son_present:
                 # Move the file to the destination folder
                 shutil.move(file_path, os.path.join(destination_folder, file))
                 matches += 1
 
-print("Process complete! Found (matches) matches. ")
+end_time = time.time()
+total_time = end_time - start_time
+print(f"Process complete! Found {matches} matches in {total_time} seconds.")
