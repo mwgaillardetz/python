@@ -3,7 +3,7 @@ This script automates playlist management for your Plex server
 using pre-defined variables. Playlists are local (Windows), and
 Plex runs in a docker container - though where Plex lives shouldn't
 matter as long as the file name in your mp3s match the file name
-in your Plex library. 
+in your Plex library.
 
 It connects to your Plex server using a provided URL and token.
 Scours through local folders (defined as 'local_folder'), processing .m3u
@@ -21,18 +21,23 @@ Utilizing the plexapi library for Plex server interaction and the os and
 logging libraries for file and logging operations, this script streamlines
 your playlist management tasks effortlessly.
 """
-
 from plexapi.server import PlexServer
 from plexapi.playlist import Playlist
+from fuzzywuzzy import fuzz
 import os
 import time
 import logging
 
-# Define these variables before running the script:
+# Configure logging
+logging.basicConfig(filename='C:\\Logs\\plex-playlists-sync.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
 PLEX_URL = 'http://localhost:32400'
 PLEX_TOKEN = 'your-plex-token'
-PLEX_LIBRARY_SECTION_ID = #2 is most common, can be found in the xml used to find plex_token
-local_folder = r"C:\your\playlist\folder\location"
+PLEX_LIBRARY_SECTION_ID = 5
+local_folder = r"W:\Music\_deemix2022\Playlists"  # Replace with your local Windows base path
+
+def normalize_string(s):
+    return s.lower().strip() if s else ""
 
 def convert_m3u8_to_m3u(m3u8_playlist_path):
     m3u_playlist_path = m3u8_playlist_path.replace('.m3u8', '.m3u')
@@ -64,14 +69,31 @@ def sync_playlist_with_plex(plex, playlist_path):
 
     # Find the tracks that match the artist name and track name in the M3U file
     playlist_tracks = []
+    unmatched_tracks = 0
     for track_info in track_infos:
         if len(track_info) == 2:
             artist_name, track_name = track_info
             track_name = track_name.replace('.mp3', '')  # Remove the .mp3 extension
+
+            # Normalize the artist name and track name
+            artist_name = normalize_string(artist_name)
+            track_name = normalize_string(track_name)
+
+            matched = False
             for track in tracks:
-                if track.title == track_name and track.grandparentTitle == artist_name:
+                # Normalize the artist name and track name
+                track_artist_name = normalize_string(track.grandparentTitle)
+                track_track_name = normalize_string(track.title)
+
+                # Use fuzzy matching to compare the artist name and track name
+                if fuzz.token_set_ratio(artist_name, track_artist_name) > 70 and fuzz.token_set_ratio(track_name, track_track_name) > 70:
                     playlist_tracks.append(track)
+                    matched = True
                     break
+
+            if not matched:
+                unmatched_tracks += 1
+                logging.debug(f"Track not matched: Artist - {artist_name}, Track - {track_name}")
 
     playlist_name = os.path.basename(playlist_path).replace('.m3u', '')
     if playlist_tracks:
@@ -88,6 +110,10 @@ def sync_playlist_with_plex(plex, playlist_path):
 
         # Add the new tracks to the playlist
         playlist.addItems(playlist_tracks)
+
+        logging.info(f"Added {len(playlist_tracks)} tracks to playlist: {playlist_name}")
+        logging.info(f"{unmatched_tracks} tracks were not matched for playlist: {playlist_name}")
+
         return playlist
     else:
         logging.error(f"No matching tracks found for playlist: {playlist_name}")
@@ -102,7 +128,7 @@ for root, dirs, files in os.walk(local_folder):
             if file.endswith('.m3u8'):
                 m3u8_playlist_path = os.path.join(root, file)
                 m3u_playlist_path = convert_m3u8_to_m3u(m3u8_playlist_path)
-                sync_playlist_with_plex(plex, m3u_playlist_path)
+                sync_playlist_with_plex(plex, m3u8_playlist_path)
             elif file.endswith('.m3u'):
                 m3u_playlist_path = os.path.join(root, file)
                 m3u8_playlist_path = m3u_playlist_path.replace('.m3u', '.m3u8')
