@@ -2,8 +2,8 @@
 This script automates playlist management for your Plex server
 using pre-defined variables. Playlists are local (Windows), and
 Plex runs in a docker container - though where Plex lives shouldn't
-matter as long as the file name in your mp3s match the file name
-in your Plex library.
+matter as long as the file name in your mp3s *roughly* match the 
+file name in your Plex library.
 
 It connects to your Plex server using a provided URL and token.
 Scours through local folders (defined as 'local_folder'), processing .m3u
