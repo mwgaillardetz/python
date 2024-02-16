@@ -122,18 +122,27 @@ def sync_playlist_with_plex(plex, playlist_path):
 # Connect to the Plex server
 plex = PlexServer(PLEX_URL, PLEX_TOKEN)
 
+# Store the last modified times of the .m3u files
+last_modified_times = {}
+
 # Convert and sync each playlist
 for root, dirs, files in os.walk(local_folder):
     for file in files:
         try:
-            if file.endswith('.m3u8'):
-                m3u8_playlist_path = os.path.join(root, file)
-                m3u_playlist_path = convert_m3u8_to_m3u(m3u8_playlist_path)
-                sync_playlist_with_plex(plex, m3u_playlist_path)  # Use the .m3u file path
-            elif file.endswith('.m3u'):
+            if file.endswith('.m3u'):
                 m3u_playlist_path = os.path.join(root, file)
                 m3u8_playlist_path = m3u_playlist_path.replace('.m3u', '.m3u8')
-                if not os.path.exists(m3u8_playlist_path) or os.path.getmtime(m3u_playlist_path) > os.path.getmtime(m3u8_playlist_path):
+
+                # Get the last modified time of the .m3u file
+                last_modified_time = os.path.getmtime(m3u_playlist_path)
+
+                # If the .m3u file has been modified since the last sync, run the sync
+                if m3u_playlist_path not in last_modified_times or last_modified_time > last_modified_times[m3u_playlist_path]:
+                    if file.endswith('.m3u8'):
+                        m3u_playlist_path = convert_m3u8_to_m3u(m3u8_playlist_path)
                     sync_playlist_with_plex(plex, m3u_playlist_path)
+
+                    # Update the last modified time
+                    last_modified_times[m3u_playlist_path] = last_modified_time
         except Exception as e:
             logging.error(f"An error occurred while processing file {file}: {e}")
