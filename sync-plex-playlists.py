@@ -33,8 +33,9 @@ logging.basicConfig(filename='C:\\Logs\\plex-playlists-sync.log', level=logging.
 
 PLEX_URL = 'http://localhost:32400'
 PLEX_TOKEN = 'your-plex-token'
-PLEX_LIBRARY_SECTION_ID = 5
-local_folder = r"W:\Music\_deemix2022\Playlists"  # Replace with your local Windows base path
+PLEX_LIBRARY_SECTION_ID = 2 #Most common is 2, use the same method of gettig your plex-token to retrieve 
+local_folder = r"C:\path\to\.m3u8\playlists"  # Replace with your local Windows base path
+
 
 def normalize_string(s):
     return s.lower().strip() if s else ""
@@ -128,7 +129,7 @@ for root, dirs, files in os.walk(local_folder):
             if file.endswith('.m3u8'):
                 m3u8_playlist_path = os.path.join(root, file)
                 m3u_playlist_path = convert_m3u8_to_m3u(m3u8_playlist_path)
-                sync_playlist_with_plex(plex, m3u8_playlist_path)
+                sync_playlist_with_plex(plex, m3u_playlist_path)  # Use the .m3u file path
             elif file.endswith('.m3u'):
                 m3u_playlist_path = os.path.join(root, file)
                 m3u8_playlist_path = m3u_playlist_path.replace('.m3u', '.m3u8')
