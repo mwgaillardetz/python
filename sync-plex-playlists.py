@@ -33,7 +33,7 @@ logging.basicConfig(filename='C:\\Logs\\plex-playlists-sync.log', level=logging.
 
 PLEX_URL = 'http://localhost:32400'
 PLEX_TOKEN = 'your-plex-token'
-PLEX_LIBRARY_SECTION_ID = 2 #Most common is 2, use the same method of gettig your plex-token to retrieve 
+PLEX_LIBRARY_SECTION_ID = 2  # Most common is 2, use the same method of gettig your plex-token to retrieve 
 local_folder = r"C:\path\to\.m3u8\playlists"  # Replace with your local Windows base path
 
 
